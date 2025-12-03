@@ -1,0 +1,23 @@
+---
+title: "Lab 3s"
+author: "Amren Hossain"
+format:
+  html:
+    toc: true
+    toc_float: true
+    embed-resources: true
+    code-fold: true
+editor: visual
+execute: 
+  warning: false
+  message: false
+---
+
+## About Me
+
+![picture of cat](pusheen2.jpeg)
+
+-   [Lab from earlier](lab_7.html)
+-   [Lab 13](Lab13.html)
+
+new file
