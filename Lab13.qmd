@@ -1,5 +1,5 @@
 ---
-title: "Lab 3s"
+title: "Lab 13"
 author: "Amren Hossain"
 format:
   html:
@@ -13,11 +13,8 @@ execute:
   message: false
 ---
 
-## About Me
+There is code here i swear
+```{r}
 
-![picture of cat](pusheen2.jpeg)
+```
 
--   [Lab from earlier](Lab_7.html)
--   [Lab 13](Lab13.html)
-
-new file
