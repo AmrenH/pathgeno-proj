@@ -13,8 +13,12 @@ execute:
   message: false
 ---
 
-There is code here i swear
-```{r}
+# Exercise 1
 
+Link Lab 13 file to the index file
+
+# Exercise 2
+```{r}
+print("Hello")
 ```
 
