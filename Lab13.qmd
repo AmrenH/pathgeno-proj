@@ -18,7 +18,106 @@ execute:
 Link Lab 13 file to the index file
 
 # Exercise 2
+Upload to co-pilot the NEON_soilMAGs_soilChem.csv file. Then ask for suggestions in the types of analysis you can do or create a prompt using one of the four categories above.
+
+After uploading the file to co-pilot, I decided to do multivariate regression and machine learning model to predict the soil chemistry. 
+
+# Exercise 3 
+## Report of the analysis
+### Random Forest Regression
+
+This analysis uses random forest regression to predict which variables have the most impotance when predicting importance for the machine learning model. 
+The RMSE(Root Mean Square Error) means the square root of the average squared difference between predicted and actual values.
+
+- Lower RMSE = better model fit (predictions are closer to actual values)
+
+The R2(Coefficient of Determination) shows the proportion of variance in the response variable explained by the predictors. 
+
+- Higher R2 = stronger predictive power
 ```{r}
-print("Hello")
+library(tidyverse)
+library("caret")
+library("randomForest")
+library("glmnet")
+
+soil_data <- read_csv("NEON_soilMAGs_soilChem.csv") %>%
+  # Drop index and metadata columns not useful for prediction
+  select("genomicsSampleID", "bin_oid", "bin_id", "site", "site_ID",
+         "subplot", "layer", "img_genome_id",
+          "gold_study_id", "soilMoisture", "soilTemp", "soilInWaterpH", "soilInCaClpH", "elevation") %>%
+  drop_na()
+
+
+# Split predictors and response
+Y <- soil_data$soilInWaterpH
+X <- soil_data %>%
+  select("soilMoisture", "soilTemp", "soilInWaterpH", "soilInCaClpH", "elevation")
+
+
+# Train/test split
+set.seed(123)
+trainIndex <- createDataPartition(Y, p = 0.8, list = FALSE)
+X_train <- X[trainIndex, , drop = FALSE]
+Y_train <- Y[trainIndex]
+X_test  <- X[-trainIndex, , drop = FALSE]
+Y_test  <- Y[-trainIndex]
+
+# Impute with column means
+X_train <- X_train %>% mutate_all(~ifelse(is.na(.), mean(., na.rm = TRUE), .))
+X_test  <- X_test %>% mutate_all(~ifelse(is.na(.), mean(., na.rm = TRUE), .))
+
+# Fit random forest
+rf_model <- randomForest(x = X_train, y = Y_train, importance = TRUE)
+pred <- predict(rf_model, X_test)
+
+# Evaluate
+pred <- predict(rf_model, X_test)
+rmse_val <- RMSE(pred, Y_test)
+r2_val   <- R2(pred, Y_test)
+cat("Random Forest Results:\n")
+cat("RMSE:", rmse_val, "\n")
+cat("R2:", r2_val, "\n")
 ```
+
+### Random Forest Model
+
+The higher the %IncMSE means the more important it is in evaluating the soil chemistry. The IncNodePurity plot shows how each variable reduces the variance for the decision tree model. This basically means how each variable is likley to influence soil chemistry when looking for a certain outcome. 
+```{r}
+importance_vals <- importance(rf_model)
+varImpPlot(rf_model)
+```
+
+### Elastic Net 
+
+This shows the predictive value of the variables that I input to find which factors are most important when contributing to soil chemistry. The values with a dot next to them means it is not statistically relevant enough to predict soil chemistry. This means it's elastic net regression is equal to 0. 
+```{r}
+library(glmnet)
+cvfit <- cv.glmnet(as.matrix(X_train), Y_train, alpha = 0.5)
+coef(cvfit, s = "lambda.min")
+```
+### Decision Tree 
+
+This is a decision tree that shows how each variable influences the outcome of the soil chemistry in the MAGs dataset. It seems that soilTemp is able to definitively able to sort the pH levels of the MAGs. 
+```{r}
+library(tidyverse)
+library(rpart)
+library("rpart.plot")
+
+Z <- soil_data$soilInWaterpH
+W <- soil_data %>%
+  select("soilMoisture", "soilTemp", "elevation")
+
+# Combine predictors and response
+tree_data <- data.frame(Y = W, Z)
+
+# Optional: rename response for clarity
+names(tree_data)[1] <- "soilChemistry"
+
+tree_model <- rpart(soilChemistry ~ ., data = tree_data, method = "anova")
+
+rpart.plot(tree_model, type = 2, extra = 101, fallen.leaves = TRUE)
+```
+
+
+
 
